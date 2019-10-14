@@ -3,10 +3,6 @@ package com.JLin.serialportdemo;
 import android.content.Intent;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
-import android.text.TextUtils;
-import android.util.Log;
-import android.view.View;
-import android.widget.TextView;
 
 import com.JLin.serialportdemo.services.SerialPortService;
 
@@ -22,6 +18,7 @@ import java.util.concurrent.ScheduledThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 
 import android_serialport_api.SerialPort;
+
 
 /**
  * @author JLin
@@ -85,22 +82,101 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private void getOneWeight() {
-        statusFlag = 11;
-        send("01 03 40 03 00 02 21 cb");
-    }
-
-    private void getThreeWeight() {
-        statusFlag = 31;
-        send("03 03 40 03 00 02 20 29");
+        send("FF FF FF FF 5A 5C 0C 01 00 06 00 A5");
 
         if (checkService == null) {
             checkService = new ScheduledThreadPoolExecutor(1);
         }
         checkService.schedule(() -> {
-            getOneWeight();
-            System.out.println("MainActivity：" + "getThreeWeight" + "==== 3号称超时");
-        }, 300, TimeUnit.MILLISECONDS);
+            System.out.println("MainActivity：" + "getOneWeight" + "==== 1号称超时");
+            getTwoWeight();
+        }, 1000, TimeUnit.MILLISECONDS);
     }
+
+    private void getTwoWeight() {
+        send("FF FF FF FF 5A 5C 0C 02 00 06 00 A5");
+
+        if (checkService == null) {
+            checkService = new ScheduledThreadPoolExecutor(1);
+        }
+        checkService.schedule(() -> {
+            System.out.println("MainActivity：" + "getTwoWeight" + "==== 2号称超时");
+            getThreeWeight();
+        }, 1000, TimeUnit.MILLISECONDS);
+    }
+
+    private void getThreeWeight() {
+        send("FF FF FF FF 5A 5C 0C 03 00 06 00 A5");
+
+        if (checkService == null) {
+            checkService = new ScheduledThreadPoolExecutor(1);
+        }
+        checkService.schedule(() -> {
+            System.out.println("MainActivity：" + "getThreeWeight" + "==== 3号称超时");
+            getFourWeight();
+        }, 1000, TimeUnit.MILLISECONDS);
+    }
+
+    private void getFourWeight() {
+        send("FF FF FF FF 5A 5C 0C 04 00 06 00 A5");
+
+        if (checkService == null) {
+            checkService = new ScheduledThreadPoolExecutor(1);
+        }
+        checkService.schedule(() -> {
+            System.out.println("MainActivity：" + "getFourWeight" + "==== 4号称超时");
+            getFiveWeight();
+        }, 1000, TimeUnit.MILLISECONDS);
+    }
+
+    private void getFiveWeight() {
+        send("FF FF FF FF 5A 5C 0C 05 00 06 00 A5");
+
+        if (checkService == null) {
+            checkService = new ScheduledThreadPoolExecutor(1);
+        }
+        checkService.schedule(() -> {
+            System.out.println("MainActivity：" + "getFourWeight" + "==== 5号称超时");
+            getSixWeight();
+        }, 1000, TimeUnit.MILLISECONDS);
+    }
+
+    private void getSixWeight() {
+        send("FF FF FF FF 5A 5C 0C 06 00 06 00 A5");
+
+        if (checkService == null) {
+            checkService = new ScheduledThreadPoolExecutor(1);
+        }
+        checkService.schedule(() -> {
+            System.out.println("MainActivity：" + "getFourWeight" + "==== 6号称超时");
+            getSevenWeight();
+        }, 1000, TimeUnit.MILLISECONDS);
+    }
+
+    private void getSevenWeight() {
+        send("FF FF FF FF 5A 5C 0C 07 00 06 00 A5");
+
+        if (checkService == null) {
+            checkService = new ScheduledThreadPoolExecutor(1);
+        }
+        checkService.schedule(() -> {
+            System.out.println("MainActivity：" + "getFourWeight" + "==== 7号称超时");
+            getEightWeight();
+        }, 1000, TimeUnit.MILLISECONDS);
+    }
+
+    private void getEightWeight() {
+        send("FF FF FF FF 5A 5C 0C 08 00 06 00 A5");
+
+        if (checkService == null) {
+            checkService = new ScheduledThreadPoolExecutor(1);
+        }
+        checkService.schedule(() -> {
+            System.out.println("MainActivity：" + "getFourWeight" + "==== 8号称超时");
+            getOneWeight();
+        }, 1000, TimeUnit.MILLISECONDS);
+    }
+
 
     /**
      * 发送串口指令
@@ -114,6 +190,7 @@ public class MainActivity extends AppCompatActivity {
             mRestart = hexCommandToByte(s.getBytes());
             mOutputStream.write(mRestart);
             mOutputStream.write('\n');
+            mOutputStream.flush();
         } catch (IOException e) {
             e.printStackTrace();
         }
@@ -147,42 +224,51 @@ public class MainActivity extends AppCompatActivity {
     @Subscribe(threadMode = ThreadMode.MAIN)
     public void onEvent(final MessageEvent event) {
         switch (event.getEvent()) {
-            case "COM_WEIGHT":
-                int data = Integer.parseInt(event.getMsg());
-                if (statusFlag == 11) {
-                    System.out.println("1号桶获取重量: ++++++++++++++++++++++" + data);
-                    if (checkService != null && !checkService.isShutdown()) {
-                        checkService.shutdownNow();
-                        checkService = null;
-                    }
+            case "COM_RESPONSE":
+                /*查询设备状态*/
+                String data = event.getMsg();
 
-                    if (data < 999999) {
-                        oneWeightList.addLast(data);
-                    }
-
-                    if (oneWeightList.size() >= 7) {
-                        for (int i = 0; i < 7; i++) {
-                            oneSum += oneWeightList.pollFirst();
-                        }
-                        oneAvg = oneSum / 7;
-                        oneSum = 0;
-                    }
-
-                    if (data - oneAvg < 15 && data - oneAvg > -15) {
-                        System.out.println("MainActivity：" + "11111111111111" + "---- ");
-                        oneCount++;
-                    } else {
-                        System.out.println("MainActivity：" + "22222222222222" + "---- ");
-                        oneCount = 0;
-                    }
-
-                    if (oneCount == 10) {
-                        System.out.println("MainActivity：" + "oneWeight" + "==== " + data);
-                        oneCount = 0;
-                    }
-
-                    send("01 03 40 03 00 02 21 cb");
+                if (checkService != null && !checkService.isShutdown()) {
+                    checkService.shutdownNow();
+                    checkService = null;
                 }
+                try {
+                    Thread.sleep(800);
+
+                    switch (data.substring(6, 8)) {
+                        case "01":
+                            getTwoWeight();
+                            break;
+                        case "02":
+                            getThreeWeight();
+                            break;
+                        case "03":
+                            getFourWeight();
+                            break;
+                        case "04":
+                            getFiveWeight();
+                            break;
+                        case "05":
+                            getSixWeight();
+                            break;
+                        case "06":
+                            getSevenWeight();
+                            break;
+                        case "07":
+                            getEightWeight();
+                            break;
+                        case "08":
+                            getOneWeight();
+                            break;
+                        default:
+                            break;
+                    }
+                } catch (InterruptedException e) {
+                    e.printStackTrace();
+                }
+
+                break;
+            default:
                 break;
         }
     }

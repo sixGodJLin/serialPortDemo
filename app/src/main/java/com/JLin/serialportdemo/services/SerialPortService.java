@@ -8,6 +8,9 @@ import com.JLin.serialportdemo.MessageEvent;
 
 import org.greenrobot.eventbus.EventBus;
 
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
+
 
 /**
  * @author JLin
@@ -26,16 +29,26 @@ public class SerialPortService extends BaseSerialPortService {
     public void onDataReceived(byte[] buffer, int size) {
         if (size > 0) {
             stringBuffer.append(new String(buffer, 0, size));
-            String data = bytesToHexString(buffer).trim().substring(0, size * 2);
-            System.out.println("WeighService：" + "onDataReceived" + "++++ " + data);
-            if (size == 8) {
-                data = data.substring(4, 10);
+            if (bytesToHexString(buffer).contains("5a5c")) {
+                String data = bytesToHexString(buffer).trim();
+                System.out.println("SerialPortService onDataReceived ====:" + data);
+                String regex = "f.*f5a5c.*a5";
+                Pattern pattern = Pattern.compile(regex);
+                Matcher matcher = pattern.matcher(data);
+                if (matcher.find()) {
+                    data = matcher.group();
+                    //原本此处发送广播
+
+                    while (data.startsWith("ff")) {
+                        data = data.substring(2);
+                    }
+                    EventBus.getDefault().post(new MessageEvent("COM_RESPONSE", data));
+                }
+                stringBuffer.setLength(0);
             }
-            if (size == 9) {
-                data = data.substring(6, 12);
+            if (stringBuffer.length() > 45) {
+                stringBuffer.setLength(0);
             }
-            int x = Integer.parseInt(data, 16);
-            EventBus.getDefault().post(new MessageEvent("COM_WEIGHT", x + ""));
         }
     }
 
