@@ -3,11 +3,18 @@ package com.JLin.serialportdemo.services;
 import android.content.Intent;
 import android.os.IBinder;
 import android.support.annotation.Nullable;
+import android.util.Log;
 
 import com.JLin.serialportdemo.MessageEvent;
 
 import org.greenrobot.eventbus.EventBus;
 
+import java.nio.ByteBuffer;
+import java.util.Arrays;
+import java.util.LinkedList;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.ScheduledThreadPoolExecutor;
+import java.util.concurrent.TimeUnit;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -18,7 +25,9 @@ import java.util.regex.Pattern;
  * @describe 串口服务
  */
 public class SerialPortService extends BaseSerialPortService {
-    StringBuffer stringBuffer = new StringBuffer();
+    private static final String TAG = "SerialPortService";
+    private StringBuffer stringBuffer = new StringBuffer();
+    private ScheduledExecutorService service;
 
     @Override
     public void onCreate() {
@@ -27,28 +36,36 @@ public class SerialPortService extends BaseSerialPortService {
 
     @Override
     public void onDataReceived(byte[] buffer, int size) {
+        if (service != null && !service.isShutdown()) {
+            service.shutdownNow();
+            service = null;
+        }
         if (size > 0) {
-            stringBuffer.append(new String(buffer, 0, size));
-            if (bytesToHexString(buffer).contains("5a5c")) {
-                String data = bytesToHexString(buffer).trim();
-                System.out.println("SerialPortService onDataReceived ====:" + data);
-                String regex = "f.*f5a5c.*a5";
-                Pattern pattern = Pattern.compile(regex);
-                Matcher matcher = pattern.matcher(data);
-                if (matcher.find()) {
-                    data = matcher.group();
-                    //原本此处发送广播
+            stringBuffer.append(bytesToHexString(buffer).substring(0, size * 2));
+            Log.e(TAG, "onDataReceived: " + stringBuffer.toString());
 
-                    while (data.startsWith("ff")) {
-                        data = data.substring(2);
-                    }
-                    EventBus.getDefault().post(new MessageEvent("COM_RESPONSE", data));
-                }
+            service = new ScheduledThreadPoolExecutor(1);
+            service.schedule(() -> {
+                String data = stringBuffer.toString();
+//                if (data.contains("5a5c")) {
+//                    Log.d(TAG, "onDataReceived: " + data);
+//                    String regex = "f.*f5a5c.*a5";
+//                    Pattern pattern = Pattern.compile(regex);
+//                    Matcher matcher = pattern.matcher(data);
+//                    if (matcher.find()) {
+//                        data = matcher.group();
+//                        //原本此处发送广播
+//
+//                        while (data.startsWith("ff")) {
+//                            data = data.substring(2);
+//                        }
+                EventBus.getDefault().post(new MessageEvent("COM_RESPONSE", data));
+//                    }
                 stringBuffer.setLength(0);
-            }
-            if (stringBuffer.length() > 45) {
-                stringBuffer.setLength(0);
-            }
+//                } else {
+//                    stringBuffer.setLength(0);
+//                }
+            }, 200, TimeUnit.MILLISECONDS);
         }
     }
 

@@ -3,6 +3,8 @@ package com.JLin.serialportdemo;
 import android.content.Intent;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
+import android.view.View;
+import android.widget.TextView;
 
 import com.JLin.serialportdemo.services.SerialPortService;
 
@@ -26,18 +28,8 @@ import android_serialport_api.SerialPort;
  * @describe 窜口通信 demo
  */
 public class MainActivity extends AppCompatActivity {
-
+    private TextView tvSend;
     private OutputStream mOutputStream;
-
-    /**
-     * 当前指令传输FLAG
-     */
-    private int statusFlag = 0;
-
-    private LinkedList<Integer> oneWeightList;
-    private int oneSum = 0;
-    private int oneAvg;
-    private int oneCount = 0;
 
     /**
      * 检查当前称数据的线程
@@ -50,12 +42,13 @@ public class MainActivity extends AppCompatActivity {
         setContentView(R.layout.activity_main);
         EventBus.getDefault().register(this);
 
+        tvSend = findViewById(R.id.tv_send);
+
         checkService = new ScheduledThreadPoolExecutor(1);
-
-        oneWeightList = new LinkedList<>();
-
         openCOM();
         initCOMConfig();
+
+        tvSend.setOnClickListener(v -> getOneWeight());
     }
 
     /**
@@ -82,100 +75,100 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private void getOneWeight() {
-        send("FF FF FF FF 5A 5C 0C 01 00 06 00 A5");
+        send("01 03 00 01 00 02 95 cb");
 
         if (checkService == null) {
             checkService = new ScheduledThreadPoolExecutor(1);
         }
         checkService.schedule(() -> {
-            System.out.println("MainActivity：" + "getOneWeight" + "==== 1号称超时");
+//            System.out.println("MainActivity：" + "getOneWeight" + "==== 1号称超时");
             getTwoWeight();
         }, 1000, TimeUnit.MILLISECONDS);
     }
 
     private void getTwoWeight() {
-        send("FF FF FF FF 5A 5C 0C 02 00 06 00 A5");
+        send("02 03 00 01 00 02 95 f8");
 
         if (checkService == null) {
             checkService = new ScheduledThreadPoolExecutor(1);
         }
         checkService.schedule(() -> {
-            System.out.println("MainActivity：" + "getTwoWeight" + "==== 2号称超时");
+//            System.out.println("MainActivity：" + "getTwoWeight" + "==== 2号称超时");
             getThreeWeight();
         }, 1000, TimeUnit.MILLISECONDS);
     }
 
     private void getThreeWeight() {
-        send("FF FF FF FF 5A 5C 0C 03 00 06 00 A5");
+        send("03 03 00 01 00 02 94 29");
 
         if (checkService == null) {
             checkService = new ScheduledThreadPoolExecutor(1);
         }
         checkService.schedule(() -> {
-            System.out.println("MainActivity：" + "getThreeWeight" + "==== 3号称超时");
+//            System.out.println("MainActivity：" + "getThreeWeight" + "==== 3号称超时");
             getFourWeight();
         }, 1000, TimeUnit.MILLISECONDS);
     }
 
     private void getFourWeight() {
-        send("FF FF FF FF 5A 5C 0C 04 00 06 00 A5");
+        send("04 03 00 01 00 02 95 9e");
 
         if (checkService == null) {
             checkService = new ScheduledThreadPoolExecutor(1);
         }
         checkService.schedule(() -> {
-            System.out.println("MainActivity：" + "getFourWeight" + "==== 4号称超时");
+//            System.out.println("MainActivity：" + "getFourWeight" + "==== 4号称超时");
             getFiveWeight();
         }, 1000, TimeUnit.MILLISECONDS);
     }
 
     private void getFiveWeight() {
-        send("FF FF FF FF 5A 5C 0C 05 00 06 00 A5");
+        send("05 03 00 01 00 02 94 4f");
 
         if (checkService == null) {
             checkService = new ScheduledThreadPoolExecutor(1);
         }
         checkService.schedule(() -> {
-            System.out.println("MainActivity：" + "getFourWeight" + "==== 5号称超时");
-            getSixWeight();
-        }, 1000, TimeUnit.MILLISECONDS);
-    }
-
-    private void getSixWeight() {
-        send("FF FF FF FF 5A 5C 0C 06 00 06 00 A5");
-
-        if (checkService == null) {
-            checkService = new ScheduledThreadPoolExecutor(1);
-        }
-        checkService.schedule(() -> {
-            System.out.println("MainActivity：" + "getFourWeight" + "==== 6号称超时");
-            getSevenWeight();
-        }, 1000, TimeUnit.MILLISECONDS);
-    }
-
-    private void getSevenWeight() {
-        send("FF FF FF FF 5A 5C 0C 07 00 06 00 A5");
-
-        if (checkService == null) {
-            checkService = new ScheduledThreadPoolExecutor(1);
-        }
-        checkService.schedule(() -> {
-            System.out.println("MainActivity：" + "getFourWeight" + "==== 7号称超时");
-            getEightWeight();
-        }, 1000, TimeUnit.MILLISECONDS);
-    }
-
-    private void getEightWeight() {
-        send("FF FF FF FF 5A 5C 0C 08 00 06 00 A5");
-
-        if (checkService == null) {
-            checkService = new ScheduledThreadPoolExecutor(1);
-        }
-        checkService.schedule(() -> {
-            System.out.println("MainActivity：" + "getFourWeight" + "==== 8号称超时");
+//            System.out.println("MainActivity：" + "getFourWeight" + "==== 5号称超时");
             getOneWeight();
         }, 1000, TimeUnit.MILLISECONDS);
     }
+
+//    private void getSixWeight() {
+//        send("FF FF FF FF 5A 5C 0C 06 00 06 00 A5");
+//
+//        if (checkService == null) {
+//            checkService = new ScheduledThreadPoolExecutor(1);
+//        }
+//        checkService.schedule(() -> {
+//            System.out.println("MainActivity：" + "getFourWeight" + "==== 6号称超时");
+//            getSevenWeight();
+//        }, 1000, TimeUnit.MILLISECONDS);
+//    }
+//
+//    private void getSevenWeight() {
+//        send("FF FF FF FF 5A 5C 0C 07 00 06 00 A5");
+//
+//        if (checkService == null) {
+//            checkService = new ScheduledThreadPoolExecutor(1);
+//        }
+//        checkService.schedule(() -> {
+//            System.out.println("MainActivity：" + "getFourWeight" + "==== 7号称超时");
+//            getEightWeight();
+//        }, 1000, TimeUnit.MILLISECONDS);
+//    }
+//
+//    private void getEightWeight() {
+//        send("FF FF FF FF 5A 5C 0C 08 00 06 00 A5");
+//
+//        if (checkService == null) {
+//            checkService = new ScheduledThreadPoolExecutor(1);
+//        }
+//        checkService.schedule(() -> {
+//            System.out.println("MainActivity：" + "getFourWeight" + "==== 8号称超时");
+//            getOneWeight();
+//        }, 1000, TimeUnit.MILLISECONDS);
+//    }
 
 
     /**
@@ -228,48 +221,47 @@ public class MainActivity extends AppCompatActivity {
                 /*查询设备状态*/
                 String data = event.getMsg();
 
-                if (checkService != null && !checkService.isShutdown()) {
-                    checkService.shutdownNow();
-                    checkService = null;
-                }
-                try {
-                    Thread.sleep(800);
-
-                    switch (data.substring(6, 8)) {
-                        case "01":
-                            getTwoWeight();
-                            break;
-                        case "02":
-                            getThreeWeight();
-                            break;
-                        case "03":
-                            getFourWeight();
-                            break;
-                        case "04":
-                            getFiveWeight();
-                            break;
-                        case "05":
-                            getSixWeight();
-                            break;
-                        case "06":
-                            getSevenWeight();
-                            break;
-                        case "07":
-                            getEightWeight();
-                            break;
-                        case "08":
-                            getOneWeight();
-                            break;
+//                if (checkService != null && !checkService.isShutdown()) {
+//                    checkService.shutdownNow();
+//                    checkService = null;
+//                }
+//                try {
+//                    Thread.sleep(10);
+//                    switch (data.substring(0, 2)) {
+//                        case "01":
+//                            getTwoWeight();
+//                            break;
+//                        case "02":
+//                            getThreeWeight();
+//                            break;
+//                        case "03":
+//                            getFourWeight();
+//                            break;
+//                        case "04":
+//                            getFiveWeight();
+//                            break;
+//                        case "05":
+//                            getOneWeight();
+//                            break;
+//                        case "06":
+//                            getSevenWeight();
+//                            break;
+//                        case "07":
+//                            getEightWeight();
+//                            break;
+//                        case "08":
+//                            getOneWeight();
+//                            break;
                         default:
                             break;
-                    }
-                } catch (InterruptedException e) {
-                    e.printStackTrace();
-                }
+//                    }
+//                } catch (InterruptedException e) {
+//                    e.printStackTrace();
+//                }
 
-                break;
-            default:
-                break;
+//                break;
+//            default:
+//                break;
         }
     }
 

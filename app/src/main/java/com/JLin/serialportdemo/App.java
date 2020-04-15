@@ -22,7 +22,7 @@ public class App extends Application {
     public SerialPort getSerialPort() throws SecurityException, IOException, InvalidParameterException {
         if (serialPort == null) {
             /* Read serial port parameters */
-            String path = "/dev/ttyS4";
+            String path = "/dev/ttyUSB11";
             int baudRate = 9600;
             /* Open the serial port */
             serialPort = new SerialPort(new File(path), baudRate, 0);
